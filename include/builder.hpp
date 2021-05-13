@@ -4,10 +4,17 @@
 #define INCLUDE_HEADER_HPP_
 
 #include <iostream>
-#include <boost/program_options.hpp>
+#include "boost/program_options.hpp"
 
 
-void build(int argc, char* argv[]);
+class Builder{
+ public:
+Builder() = default;
+static void build(int argc, char* argv[]);
+
+};
+
+
 
 
 
