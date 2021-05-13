@@ -1,5 +1,5 @@
-#include <header.hpp>
+#include <builder.hpp>
 
-int main() {
-
+int main(int argc, char* argv[]) {
+  build(argc, argv);
 }

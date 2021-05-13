@@ -28,14 +28,22 @@ string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
+hunter_add_package(Async++)
+find_package(Async++ CONFIG REQUIRED)
+hunter_add_package(BoostProcess)
+find_package(BoostProcess CONFIG REQUIRED)
+hunter_add_package(Boost COMPONENTS filesystem system chrono thread date_time program_options)
+find_package(Boost CONFIG REQUIRED log_setup filesystem system chrono thread  date_time program_options)
+
 
 add_library(${PROJECT_NAME} STATIC
   # enum your files and delete this comment
-  ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/builder.cpp
 )
 
 add_executable(demo
   ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
+        sources/builder.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -43,7 +51,17 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<INSTALL_INTERFACE:include>"
 )
 
-target_link_libraries(demo ${PROJECT_NAME})
+target_link_libraries(
+        demo ${PROJECT_NAME}
+        Async++::Async++
+        BoostProcess::boost_process
+        Boost::filesystem
+        Boost::chrono
+        Boost::thread
+        Boost::date_time
+        Boost::system
+        Boost::boost
+        Boost::program_options)
 
 if(BUILD_TESTS)
   add_executable(tests
