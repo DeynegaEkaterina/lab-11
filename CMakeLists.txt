@@ -23,15 +23,16 @@ HunterGate(
 # TODO: rename project and delete this comment
 project(lab-11-process VERSION 0.1.0)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
-string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
+#string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+#string(APPEND CMAKE_CXX_FLAGS " -Boost_USE_STATIC_LIBS")
 
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
 hunter_add_package(Async++)
 find_package(Async++ CONFIG REQUIRED)
-hunter_add_package(Boost COMPONENTS filesystem program_options)
-find_package(Boost CONFIG REQUIRED filesystem program_options)
+hunter_add_package(Boost COMPONENTS thread system filesystem program_options)
+find_package(Boost CONFIG REQUIRED thread system filesystem program_options)
 hunter_add_package(BoostProcess)
 find_package(BoostProcess CONFIG REQUIRED)
 
@@ -50,7 +51,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME}
         Async++::Async++
-        ${Boost_LIBRARIES}
+        Boost::system
+        Boost::filesystem
+        Boost::program_options
         BoostProcess::boost_process
         )
 
@@ -58,6 +61,7 @@ target_link_libraries(builder ${PROJECT_NAME})
 
 if(BUILD_TESTS)
   add_executable(tests
+          # TODO: enum your files and delete this comment
           ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
           )
   target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
