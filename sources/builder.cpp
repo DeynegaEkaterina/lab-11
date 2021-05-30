@@ -42,7 +42,7 @@ builder::builder(const size_t& ms_timeout)
 void builder::set_build(const std::string &_config) {
   config = _config; //Release or debug
   build_func = new std::function<void()>([this]{
-    if (timeout_flag || process_failed) return; // если вышло время или failed
+    if (timeout_flag || process_failed) return;
     std::cout << "-----BUILD" << std::endl;
     std::vector<std::string> args;
     args.emplace_back(cmake_path);
@@ -54,7 +54,7 @@ void builder::set_build(const std::string &_config) {
         process::execute(ini::throw_on_error(), ini::set_args(args),
                          ini::inherit_env()));
     try {
-      int result = process::wait_for_exit(*current_process);
+      int result = process::wait_for_exit(*current_process); //очищает ресурсы после execute
       if (result != 0) process_failed = true;
     } catch (...) {
       std::cout << "Build terminated: time expired" << std::endl;
@@ -86,6 +86,38 @@ void builder::set_build(const std::string &_config) {
     }
     std::cout << "Build failed" << std::endl;
     process_failed = true;
+  });
+}
+
+void builder::set_install() {
+  install_func = new std::function<void()>([this](){
+    if (timeout_flag || process_failed) return;
+    std::cout << "-----INSTALL" << std::endl;
+    std::vector<std::string> args;
+    args.emplace_back(cmake_path);
+    args.emplace_back("--build");
+    args.emplace_back("_builds");
+    args.emplace_back("--target");
+    args.emplace_back("install");
+    current_process = nullptr;
+    if (timeout_flag || process_failed) return;
+    current_process = std::make_unique<process::child>(
+        process::execute(ini::throw_on_error(), ini::set_args(args),
+                         ini::inherit_env()));
+    try {
+      int result = process::wait_for_exit(*current_process);
+      if (result != 0) process_failed = true;
+    } catch (...) {
+      std::cout << "Install terminated: time expired" << std::endl;
+      process_failed = true;
+      return;
+    }
+    if (!process_failed){
+      std::cout << "Install ended successfully" << std::endl;
+    } else {
+      std::cout << "Install failed" << std::endl;
+      process_failed = true;
+    }
   });
 }
 

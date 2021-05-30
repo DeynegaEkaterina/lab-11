@@ -18,6 +18,7 @@ class builder{
   builder();
   explicit builder(const size_t& ms_timeout);
   void set_build(const std::string &_config);
+  void set_install();
   ~builder();
 
  private:
