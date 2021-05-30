@@ -19,6 +19,7 @@ class builder{
   void set_build(const std::string &_config);
   void set_install();
   void set_pack();
+  void run();
   ~builder();
 
  private:

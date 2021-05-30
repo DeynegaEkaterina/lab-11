@@ -154,6 +154,22 @@ void builder::set_pack() {
     });
 }
 
+void builder::run() {
+  if (!timeout_flag){
+    auto task = async::spawn(*build_func);
+    if (install_func) task = task.then(*install_func);
+    if (pack_func) task = task.then(*pack_func);
+    task.wait();
+    processes_completed = true;
+    if (timeout_flag){
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::cout << "-----TIME EXPIRED" << std::endl;
+    } else {
+      std::cout << "-----PROCESS COMPLETE" << std::endl;
+    }
+  }
+}
+
 builder::~builder() {
   delete build_func;
   delete install_func;
