@@ -2,31 +2,45 @@
 
 #include <builder.hpp>
 
+namespace process = boost::process;
 
-namespace po = boost::program_options;
-
-
-void Builder::build(int argc, char* argv[]){
-
-  po::options_description desc("Allowed options");
-  desc.add_options()
-      ("help", "produce help message")
-      ("config", po::value<std::string>(),
-       "указываем конфигурацию сборки (по умолчанию Debug)")
-      ("install",
-       "добавляем этап установки (в директорию _install)")
-      ("pack",
-       "добавляем этап упаковки (в архив формата tar.gz)")
-      ("timeout <count>", po::value<int>(),
-       "указываем время ожидания (в секундах)");
-
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc,argv, desc), vm);
-  vm.notify();
-
-  if(vm.count("help")){
-    std::cout << desc << std::endl;
-  }
+builder::builder()
+    :   build_func(nullptr)
+    , install_func(nullptr)
+    , pack_func(nullptr)
+    , wait_for_timeout(nullptr)
+    , timeout_flag(false)
+    , processes_completed(false)
+    , process_failed(false)
+    , current_process(nullptr)
+{
+  cmake_path = process::search_path("cmake");
 }
 
+builder::builder(const size_t& ms_timeout)
+    :   build_func(nullptr)
+    , install_func(nullptr)
+    , pack_func(nullptr)
+    , wait_for_timeout(nullptr)
+    , timeout_flag(false)
+    , processes_completed(false)
+    , process_failed(false)
+    , current_process(nullptr)
+{
+  cmake_path = process::search_path("cmake");
+  std::thread([ms_timeout, this]{
+    for (size_t i = 0; i < ms_timeout; i+=20) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      if (processes_completed) break;
+    }
+    timeout_flag = true;
+    process::terminate(*current_process);
+  }).detach();
+}
 
+builder::~builder() {
+  delete build_func;
+  delete install_func;
+  delete pack_func;
+  delete wait_for_timeout;
+}
