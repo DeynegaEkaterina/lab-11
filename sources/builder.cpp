@@ -122,6 +122,38 @@ void builder::set_install() {
   });
 }
 
+void builder::set_pack() {
+  pack_func = new std::function<void()>([this](){
+      if (timeout_flag || process_failed) return;
+    std::cout << "-----PACK" << std::endl;
+    std::vector<std::string> args;
+    args.emplace_back(cmake_path);
+    args.emplace_back("--build");
+    args.emplace_back("_builds");
+    args.emplace_back("--target");
+    args.emplace_back("package");
+    current_process = nullptr;
+    if (timeout_flag || process_failed) return;
+    current_process = std::make_unique<process::child>(
+    process::execute(ini::throw_on_error(), ini::set_args(args),
+                     ini::inherit_env()));
+    try {
+      int result = process::wait_for_exit(*current_process);
+      if (result != 0) process_failed = true;
+    } catch (...) {
+      std::cout << "Pack terminated: time expired" << std::endl;
+      process_failed = true;
+      return;
+    }
+    if (!process_failed){
+      std::cout << "Pack ended successfully" << std::endl;
+    } else {
+      std::cout << "Pack failed" << std::endl;
+      process_failed = true;
+    }
+    });
+}
+
 builder::~builder() {
   delete build_func;
   delete install_func;
