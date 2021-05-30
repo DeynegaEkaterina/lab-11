@@ -3,6 +3,7 @@
 #include <builder.hpp>
 
 namespace process = boost::process;
+namespace ini = boost::process::initializers;
 
 builder::builder()
     :   build_func(nullptr)
@@ -36,6 +37,56 @@ builder::builder(const size_t& ms_timeout)
     timeout_flag = true;
     process::terminate(*current_process);
   }).detach();
+}
+
+void builder::set_build(const std::string &_config) {
+  config = _config; //Release or debug
+  build_func = new std::function<void()>([this]{
+    if (timeout_flag || process_failed) return; // если вышло время или failed
+    std::cout << "-----BUILD" << std::endl;
+    std::vector<std::string> args;
+    args.emplace_back(cmake_path);
+    args.emplace_back("-H.");
+    args.emplace_back("-B_builds");
+    args.emplace_back("-DCMAKE_INSTALL_PREFIX=_install");
+    args.emplace_back("-DCMAKE_BUILD_TYPE=" + config);
+    current_process = std::make_unique<process::child>(
+        process::execute(ini::throw_on_error(), ini::set_args(args),
+                         ini::inherit_env()));
+    try {
+      int result = process::wait_for_exit(*current_process);
+      if (result != 0) process_failed = true;
+    } catch (...) {
+      std::cout << "Build terminated: time expired" << std::endl;
+      process_failed = true;
+      return;
+    }
+    if (!process_failed){
+      args.clear();
+      args.emplace_back(cmake_path);
+      args.emplace_back("--build");
+      args.emplace_back("_builds");
+      if (timeout_flag) return;
+      current_process = nullptr;
+      current_process = std::make_unique<process::child>(
+          process::execute(ini::throw_on_error(), ini::set_args(args),
+                           ini::inherit_env()));
+      try {
+        int result = process::wait_for_exit(*current_process);
+        if (result != 0) process_failed = true;
+      } catch (...) {
+        std::cout << "Build terminated: time expired" << std::endl;
+        process_failed = true;
+        return;
+      }
+      if (!process_failed){
+        std::cout << "Build ended successfully" << std::endl;
+        return;
+      }
+    }
+    std::cout << "Build failed" << std::endl;
+    process_failed = true;
+  });
 }
 
 builder::~builder() {
