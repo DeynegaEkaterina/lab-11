@@ -54,7 +54,8 @@ void builder::set_build(const std::string &_config) {
         process::execute(ini::throw_on_error(), ini::set_args(args),
                          ini::inherit_env()));
     try {
-      int result = process::wait_for_exit(*current_process); //очищает ресурсы после execute
+      int result = process::wait_for_exit(*current_process); //очищает
+                                                      // ресурсы после execute
       if (result != 0) process_failed = true;
     } catch (...) {
       std::cout << "Build terminated: time expired" << std::endl;
